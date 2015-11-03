@@ -8,10 +8,6 @@ var playState = {
         this.player.kill();
         this.deadSound.play();
 
-        this.emitter.x = this.player.x;
-        this.emitter.y = this.player.y;
-        this.emitter.start(true, 600, null, 15);
-
         if( this.lives > 0 ){
             this.lives -= 1;
             this.livesLabel.text = 'lives: ' + this.lives;
@@ -19,14 +15,13 @@ var playState = {
 
         } else {
             game.time.events.add(1000, this.startMenu, this);
-
         }
         //this.music.stop();
     },
     startMenu: function () {
         game.state.start('menu');
     },
-    updateCoinPosition: function () {
+    updatePlantPosition: function () {
         var coinPosition = [
             {x: 140, y: 60}, {x: 360, y: 60}, // Top row
             {x: 60, y: 140}, {x: 440, y: 140}, // Middle row
@@ -39,10 +34,6 @@ var playState = {
             }
         };
 
-        // _.remove(coinPosition, function(obj){
-        //     return cur
-        // });
-
         this.coin.scale.setTo(1,1);
 
         var newPosition = coinPosition[
@@ -54,7 +45,7 @@ var playState = {
         this.coinSound.play();
         this.coin.scale.setTo(0,0);
 
-        this.updateCoinPosition();
+        this.updatePlantPosition();
         //game.add.tween(this.coin.scale).to({x: 1, y: 1}, 300).start();
         game.global.score += 5;
         game.add.tween(this.player.scale).to({x: 1.3, y: 1.3}, 50).to({x: 1, y: 1}, 150) .start();
@@ -63,20 +54,26 @@ var playState = {
     movePlayer: function () {
 
         if (this.cursor.left.isDown || this.moveLeft ) {
-            this.player.body.velocity.x = -200;
+            this.player.body.velocity.x = -100;
             this.player.animations.play('left');
         }
         else if (this.cursor.right.isDown || this.moveRight ) {
-            this.player.body.velocity.x = 200;
+            this.player.body.velocity.x = 100;
             this.player.animations.play('right');
         }
+        else if (this.cursor.down.isDown || this.moveDown ){
+            this.player.body.velocity.y = 100;
+            this.player.animations.play('vertical');
+        }
+        else if (this.cursor.up.isDown || this.moveUp) {
+            this.player.body.velocity.y = -100;
+            this.player.animations.play('vertical');
+        }
         else {
+            this.player.body.velocity.y = 0;
             this.player.body.velocity.x = 0;
             this.player.animations.stop();
             this.player.frame = 0;
-        }
-        if (this.cursor.up.isDown) {
-            this.jumpPlayer();
         }
     },
     addMobileInputs: function () {
@@ -149,17 +146,17 @@ var playState = {
         this.player = game.add.sprite(game.world.centerX, game.world.centerY,'player');
         this.player.anchor.setTo(0.5,0.5);
         game.physics.arcade.enable(this.player);
-        this.player.body.gravity.y = 500;
 
-        //this.player.body.setSize(20, 20, -5, 0)
+        this.player.body.setSize(20, 20, -5, 0);
+        this.player.body.collideWorldBounds = true;
 
         if (!game.device.desktop) {
             this.addMobileInputs();
         }
 
-        //
-        //this.player.animations.add('right',[1,2], 8, true);
-        //this.player.animations.add('left',[3,4], 8, true);
+        this.player.animations.add('right',[1,2], 8, true);
+        this.player.animations.add('left',[3,4], 8, true);
+        this.player.animations.add('vertical',[5,6], 8, true);
 
         // Add coins
         this.coin = game.add.sprite(60, 140, 'coin');
@@ -181,24 +178,16 @@ var playState = {
         this.nextEnemy = 0;
 
         //Walls
-        this.walls = game.add.group();
-        this.walls.enableBody = true;
-        game.add.sprite(0, 0, 'flowerBed1', 0, this.walls); // left
-        game.add.sprite(480, 0, 'flowerBed2', 0, this.walls); // right
-        game.add.sprite(0, 0, 'flowerBed3', 0, this.walls); // top left
-        game.add.sprite(300, 0, 'flowerBed4', 0, this.walls); // top right
-        game.add.sprite(0, 320, 'flowerBed5', 0, this.walls); // bottom left
-        game.add.sprite(300, 320, 'house', 0, this.walls); // bottom right
+        this.flowebeds = game.add.group();
+        this.flowebeds.enableBody = true;
+        game.add.sprite(300, 0, 'flowerBed1', 0, this.flowebeds); // left
+        game.add.sprite(480, 0, 'flowerBed2', 0, this.flowebeds); // right
+        game.add.sprite(340, 0, 'flowerBed3', 0, this.flowebeds);
+        game.add.sprite(300, 210, 'flowerBed4', 0, this.flowebeds);
+        //game.add.sprite(0, 320, 'flowerBed5', 0, this.flowebeds); // bottom left
+        //game.add.sprite(0, 100, 'house', 0, this.flowebeds); // bottom right
 
-        game.add.sprite(-100, 160, 'wallH', 0, this.walls); // Middle left
-        game.add.sprite(400, 160, 'wallH', 0, this.walls); // Middle right
-
-        var middleTop = game.add.sprite(100, 80, 'wallH', 0, this.walls);
-        middleTop.scale.setTo(1.5, 1);
-        var middleBottom = game.add.sprite(100, 240, 'wallH', 0, this.walls);
-        middleBottom.scale.setTo(1.5, 1);
-
-        this.walls.setAll('body.immovable', true);
+        this.flowebeds.setAll('body.immovable', true);
 
         this.cursor = game.input.keyboard.createCursorKeys();
 
@@ -206,24 +195,24 @@ var playState = {
 
 
     },
-    update: function () {
-        //called every 60 times per second
+    update: function () {//called every 60 times per second
+
         //this.sprite.angle += 1;
 
-        if ( this.nextEnemy < game.time.now ) {
-            var start = 4000,
-                end = 1000,
-                score = 100;
-            var delay = Math.max(start - ( start - end )* game.global.score/score, end);
-            this.addEnemy();
+        // if ( this.nextEnemy < game.time.now ) {
+        //     var start = 4000,
+        //         end = 1000,
+        //         score = 100;
+        //     var delay = Math.max(start - ( start - end )* game.global.score/score, end);
+        //     this.addEnemy();
+        //
+        //     this.nextEnemy = game.time.now + delay;
+        // }
 
-            this.nextEnemy = game.time.now + delay;
-        }
 
-
-        game.physics.arcade.collide(this.player, this.walls);
-        game.physics.arcade.collide(this.enemies, this.walls);
-        game.physics.arcade.overlap(this.player, this.enemies, this.playerDie, null, this);
+        game.physics.arcade.collide(this.player, this.flowerbeds);
+        //game.physics.arcade.collide(this.enemies, this.walls);
+        //game.physics.arcade.overlap(this.player, this.enemies, this.playerDie, null, this);
 
         game.physics.arcade.overlap(this.player, this.coin, this.takeCoin, null, this);
         this.movePlayer();

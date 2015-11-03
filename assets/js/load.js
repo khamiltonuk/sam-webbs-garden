@@ -6,7 +6,7 @@ var loadState = {
              'loading...', fontStyle);
         loadingLabel.anchor.setTo(0.5, 0.5);
 
-        progressBar = game.add.sprite(game.world.centerX, 200,
+        progressBar = game.add.sprite(game.world.centerX, 250,
             'progressBar');
         progressBar.anchor.setTo(0.5, 0.5);
         game.load.setPreloadSprite(progressBar);
@@ -17,7 +17,7 @@ var loadState = {
         game.load.image('leftButton', 'assets/images/leftButton.png');
 
         //Images
-        game.load.image('flowerBed1', 'assets/images/flower-bed-1.png');
+        game.load.image('flowerBed1', 'assets/images/flower-bed-2.png');
         game.load.image('flowerBed2', 'assets/images/flower-bed-2.png');
         game.load.image('flowerBed3', 'assets/images/flower-bed-3.png');
         game.load.image('flowerBed4', 'assets/images/flower-bed-4.png');
@@ -33,7 +33,7 @@ var loadState = {
 
 
 
-        //game.load.spritesheet('player', 'assets/images/player2.png', 20, 20);
+        game.load.spritesheet('player', 'assets/images/player2.png', 20, 20);
         game.load.spritesheet('mute', 'assets/images/muteButton.png', 28, 22);
 
         // Audio
@@ -45,6 +45,7 @@ var loadState = {
 
     },
     create: function () {
-        game.state.start('menu');
+        //game.state.start('menu');
+        game.state.start('play');
     }
 };
